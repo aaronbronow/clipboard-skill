@@ -26,6 +26,29 @@ if [[ "$1" == "--clear" ]]; then
     exit 0
 fi
 
+clear_clipboard() {
+    # OSC 52 Clear (Standard)
+    if [ -n "$SSH_TTY" ]; then
+        printf '\e]52;c;AA==\a' > "$SSH_TTY"
+    else
+        printf '\e]52;c;AA==\a' > /dev/tty
+    fi
+
+    # WSL Fallback
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        if command -v clip.exe >/dev/null; then
+            echo -n "" | clip.exe
+        fi
+    fi
+
+    # macOS Fallback
+    if [[ "$OSTYPE" == "darwin"* ]] && command -v pbcopy >/dev/null; then
+        echo -n "" | pbcopy
+    fi
+    
+    sleep 0.5
+}
+
 echo "--- Clipboard Compatibility Tester ---"
 echo "Machine: $(hostname)"
 echo "OS: $(uname -srm)"
@@ -34,15 +57,6 @@ echo "TTY: $(tty)"
 echo "SSH_TTY: $SSH_TTY"
 echo "TERM: $TERM"
 echo "-----------------------------------"
-
-# Clear clipboard at the start to prevent false positives
-echo "Clearing clipboard..."
-if [ -n "$SSH_TTY" ]; then
-    printf '\e]52;c;AA==\a' > "$SSH_TTY"
-else
-    printf '\e]52;c;AA==\a' > /dev/tty
-fi
-sleep 0.5
 
 # Detection
 IS_WSL=false
@@ -57,6 +71,9 @@ test_copy() {
     local expected=$4
     local full_label="[$category] $label"
     
+    echo "Clearing clipboard..."
+    clear_clipboard
+
     echo "Testing $full_label..."
     eval "$cmd"
     

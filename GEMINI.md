@@ -14,7 +14,7 @@ We use a semi-automated verification process to populate the `tests/COMPATIBILIT
 ### Learnings & Patterns
 - **SSH Bypass**: We have confirmed that writing directly to the `SSH_TTY` device (e.g., `/dev/pts/0`) is the most reliable way to bypass Gemini CLI subshell capture in remote environments.
 - **Reporting**: The compatibility matrix now distinguishes between the **User Environment** (host metadata) and **Agent Environment** (runtime context/TTY).
-- **False Positives**: The script now clears the host clipboard at the start of each run to ensure stale data doesn't compromise test results.
+- **False Positives**: The script now performs a robust clipboard clear before every test case. In WSL2 environments where OSC 52 is captured, automated clearing must use fallbacks like `clip.exe` to prevent stale data from compromising results.
 
 ### Compatibility Matrix Rules
 - **Positioning**: The Markdown table **must** be the final element in `tests/COMPATIBILITY.md`.
