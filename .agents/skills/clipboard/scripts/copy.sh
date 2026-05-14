@@ -5,7 +5,23 @@
 encoded=$(echo -n "$*" | base64 | tr -d '\n')
 osc52_sequence=$(printf "\e]52;c;%s\a" "$encoded")
 
-# 1. Primary: Direct TTY write (works in SSH and local shells)
+# 1. Primary: Platform-Native Tools (WSL/macOS)
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    if command -v clip.exe >/dev/null; then
+        echo -n "$*" | clip.exe
+        exit 0
+    elif [ -f "/mnt/c/Windows/System32/clip.exe" ]; then
+        echo -n "$*" | /mnt/c/Windows/System32/clip.exe
+        exit 0
+    fi
+fi
+
+if [[ "$OSTYPE" == "darwin"* ]] && command -v pbcopy >/dev/null; then
+    echo -n "$*" | pbcopy
+    exit 0
+fi
+
+# 2. Secondary: Direct TTY write (works in SSH and local shells)
 if [ -w "/dev/tty" ]; then
     printf "%s" "$osc52_sequence" > /dev/tty
     exit 0
