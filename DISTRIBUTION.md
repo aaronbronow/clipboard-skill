@@ -3,33 +3,22 @@
 This guide describes how downstream Gemini CLI extensions (like `gemini-clipboard-bridge`) should consume the artifacts produced by this project.
 
 ## Overview
-This project provides a "distributable" structure in the `dist/` directory (and as a `.tar.gz` in GitHub Releases). Downstream projects should avoid manual modification of the transport logic and instead "link" or "import" these files.
+This project provides a "distributable" structure in the `dist/` directory. Downstream projects should import these artifacts into a vendored directory.
 
 ---
 
-## Method A: Git Submodules (Recommended for Development)
-If you are actively developing both the upstream and downstream projects, use a submodule to maintain a live link.
+## Method A: Makefile Import (Recommended for Local Dev)
+The most reliable way to sync artifacts locally is to use the provided `import-skill` target. This avoids the complexity of Git submodules while ensuring you get the full `dist/` bundle.
 
-1. **Add the submodule**:
+1. **In the downstream project**, run:
    ```bash
-   git submodule add https://github.com/aaronbronow/agent-bridge-clipboard.git .vendor/agent-bridge-clipboard
+   # Point to the directory where you have agent-bridge-clipboard cloned
+   UPSTREAM_DIR=../agent-bridge-clipboard make -f ../agent-bridge-clipboard/Makefile import-skill
    ```
 
-2. **Configure Gemini Skill**:
-   Point your `gemini-extension.json` or skill symlink to the submodule path:
-   ```json
-   {
-     "skills": ["./.vendor/agent-bridge-clipboard/dist/gemini/skills/agent-bridge-clipboard"]
-   }
-   ```
-
-3. **Automation**:
-   Add a `make update-vendor` target to your downstream Makefile:
-   ```makefile
-   update-vendor:
-   	git submodule update --remote --merge
-   	cd .vendor/agent-bridge-clipboard && make build
-   ```
+2. **What this does**:
+   - Creates a `.vendor/agent-bridge-clipboard/` directory in your downstream project.
+   - Copies the contents of the upstream `dist/` directory.
 
 ---
 
