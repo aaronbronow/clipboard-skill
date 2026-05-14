@@ -12,3 +12,7 @@ Use `tests/verify.sh` to populate this matrix.
 | Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/22) | Default | Local | [OSC 52] Direct /dev/tty | FAILURE |
 | Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/22) | Default | Local | [WSL] clip.exe pipe | SUCCESS |
 | Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/22) | Default | Local | [WSL] powershell.exe | FAILURE |
+| Windows / Windows Terminal | Debian GNU/Linux 11 (bullseye) (xterm-256color on not a tty) | Sandbox | Local | [OSC 52] Direct stdout | FAILURE |
+| Windows / Windows Terminal | Debian GNU/Linux 11 (bullseye) (xterm-256color on not a tty) | Sandbox | Local | [OSC 52] Direct /dev/tty | FAILURE |
+| Windows / Windows Terminal | Debian GNU/Linux 11 (bullseye) (xterm-256color on not a tty) | Default | Local | [OSC 52] Direct stdout | FAILURE |
+| Windows / Windows Terminal | Debian GNU/Linux 11 (bullseye) (xterm-256color on not a tty) | Default | Local | [OSC 52] Direct /dev/tty | FAILURE |

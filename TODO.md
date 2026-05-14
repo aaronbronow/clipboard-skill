@@ -53,9 +53,15 @@ Test each combination and update `tests/COMPATIBILITY.md`.
 
 #### Contexts
 - [ ] Local Execution
-- [ ] Sandbox (e.g., Nix or containerized sandbox)
-- [ ] Docker Container
+- [ ] Default Gemini CLI Sandbox (AMD64)
+- [ ] Custom ARM64 Sandbox (Built from `.gemini/sandbox.Dockerfile`)
+- [ ] Sandbox with `xsel` / `wl-clipboard` (Containerized)
+- [ ] Sandbox with File-Based Bypass (`.clipboard_bypass` via host listener)
+- [ ] Sandbox with Named Pipe (FIFO) Bypass (`mkfifo .clipboard_pipe`)
+- [ ] Sandbox with SSH Pipe (`ssh host.docker.internal`)
+- [ ] Sandbox with HTTP Socket listener (`curl` to host port)
 - [ ] SSH to Remote VM (Ubuntu, Arch, etc.)
+- [ ] Nested: SSH within a Sandbox Container
 
 ### Test Scenarios to Verify
 1.  **Plain OSC 52:** `printf` to stdout.

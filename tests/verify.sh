@@ -146,5 +146,17 @@ if [ "$IS_MACOS" = true ]; then
     fi
 fi
 
+# --- Bypass Category ---
+test_copy "Bypass" "File (.clipboard_bypass)" "printf '\e]52;c;dGVzdC1maWxlLWJ5cGFzcw==\a' > .clipboard_bypass" "test-file-bypass"
+
+if [ -p ".clipboard_pipe" ]; then
+    test_copy "Bypass" "Named Pipe (.clipboard_pipe)" "printf '\e]52;c;dGVzdC1waXBlLWJ5cGFzcw==\a' > .clipboard_pipe" "test-pipe-bypass"
+fi
+
+BRIDGE_SCRIPT=".agents/skills/clipboard/scripts/copy.sh"
+if [ -f "$BRIDGE_SCRIPT" ]; then
+    test_copy "Bridge" "copy.sh wrapper" "$BRIDGE_SCRIPT 'test-bridge-script'" "test-bridge-script"
+fi
+
 echo "-----------------------------------"
 echo "Verification complete."
