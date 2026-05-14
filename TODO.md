@@ -52,12 +52,12 @@ Test each combination and update `tests/COMPATIBILITY.md`.
 - [ ] Zsh
 
 #### Contexts
-- [ ] Local Execution
-- [ ] Default Gemini CLI Sandbox (AMD64)
+- [x] Local Execution
+- [x] Default Gemini CLI Sandbox (AMD64)
 - [ ] Custom ARM64 Sandbox (Built from `.gemini/sandbox.Dockerfile`)
 - [ ] Sandbox with `xsel` / `wl-clipboard` (Containerized)
-- [ ] Sandbox with File-Based Bypass (`.clipboard_bypass` via host listener)
-- [ ] Sandbox with Named Pipe (FIFO) Bypass (`mkfifo .clipboard_pipe`)
+- [x] Sandbox with File-Based Bypass (`.clipboard_bypass` via host listener)
+- [x] Sandbox with Named Pipe (FIFO) Bypass (`mkfifo .clipboard_pipe`)
 - [ ] Sandbox with SSH Pipe (`ssh host.docker.internal`)
 - [ ] Sandbox with HTTP Socket listener (`curl` to host port)
 - [ ] SSH to Remote VM (Ubuntu, Arch, etc.)

@@ -50,21 +50,25 @@ Direct clipboard access from the Docker sandbox is restricted by environment iso
 - **OSC 52 Capture**: Standard OSC 52 escape sequences sent to `stdout` are captured and neutralized by the Gemini CLI subshell buffer, preventing them from reaching the host terminal.
 - **TTY Absence**: Writing to `/dev/tty` fails within the sandbox as no TTY is allocated for the agent's shell.
 
-### The "File-Based Bypass" Strategy
-To bridge the sandbox and host clipboard, use the `.clipboard_bypass` file as a signaling channel.
-1. **Agent Action**: The agent writes an OSC 52 sequence to the `.clipboard_bypass` file in the project root.
-2. **Host Listener**: A separate process on the host (WSL/Windows) monitors this file and echoes its content to a real TTY.
-   ```bash
-   # Host-side listener example (run on host)
-   tail -F .clipboard_bypass > $(tty)
-   ```
+### Sandbox Bypass Protocols (Verified)
+The following protocols bridge the sandbox and host clipboard by using shared workspace files as signaling channels. These mechanisms are abstracted by `copy.sh` and verified via `tests/verify.sh`.
 
-### Network-Based Sandbox Bypasses (Proposed)
-For real-time synchronization without disk I/O, several networking strategies are viable via `host.docker.internal`:
+#### 1. Named Pipe (FIFO)
+- **Status**: **SUCCESS** - Preferred for low-latency.
+- **Host Listener**: `while true; do cat .clipboard_pipe; done > $(tty)`
+- **Mechanism**: The system writes OSC 52 escape sequences to `.clipboard_pipe`.
 
-- **Named Pipe (FIFO)**: Create a `mkfifo .clipboard_pipe` in the workspace. The host runs a listener (`cat .clipboard_pipe > /dev/tty`), and the agent writes directly to the pipe. This provides a zero-config, low-latency stream.
-- **SSH Pipe**: Use `ssh host.docker.internal "clip.exe"` (or `pbcopy`). Requires SSH key orchestration but provides the most secure and native-feeling transport.
-- **HTTP Socket**: A tiny listener on the host (e.g., via `nc` or a simple Go/Node server) accepts `POST` requests from the agent via `curl`.
+#### 2. File-Based signaling
+- **Status**: **SUCCESS** - Robust fallback.
+- **Host Listener**: `tail -F .clipboard_bypass > $(tty)`
+- **Mechanism**: The system writes OSC 52 escape sequences to `.clipboard_bypass`.
+
+#### Bridge Logic (`copy.sh`)
+The `copy.sh` bridge prioritizes execution as follows:
+1. **Native Tools**: Uses `clip.exe` (WSL) or `pbcopy` (macOS) if available in the local environment.
+2. **Direct TTY**: Writes to `/dev/tty` (effective for remote SSH sessions).
+3. **Bypass Channels**: Writes to both `.clipboard_bypass` and `.clipboard_pipe` (required for Docker Sandboxes).
+4. **Stdout**: Final fallback to the primary output stream.
 
 ## Environment Notes
 - **WSL2 (Ubuntu 24.04)**: Requires `clip.exe` or `powershell.exe` for reliable clipboard access due to subshell output capture.

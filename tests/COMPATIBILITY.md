@@ -8,11 +8,10 @@ Use `tests/verify.sh` to populate this matrix.
 
 | User Environment | Agent Environment | Agent Mode | Connection | Method | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/22) | Default | Local | [OSC 52] Direct stdout | FAILURE |
-| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/22) | Default | Local | [OSC 52] Direct /dev/tty | FAILURE |
-| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/22) | Default | Local | [WSL] clip.exe pipe | SUCCESS |
-| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/22) | Default | Local | [WSL] powershell.exe | FAILURE |
-| Windows / Windows Terminal | Debian GNU/Linux 11 (bullseye) (xterm-256color on not a tty) | Sandbox | Local | [OSC 52] Direct stdout | FAILURE |
-| Windows / Windows Terminal | Debian GNU/Linux 11 (bullseye) (xterm-256color on not a tty) | Sandbox | Local | [OSC 52] Direct /dev/tty | FAILURE |
-| Windows / Windows Terminal | Debian GNU/Linux 11 (bullseye) (xterm-256color on not a tty) | Default | Local | [OSC 52] Direct stdout | FAILURE |
-| Windows / Windows Terminal | Debian GNU/Linux 11 (bullseye) (xterm-256color on not a tty) | Default | Local | [OSC 52] Direct /dev/tty | FAILURE |
+| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/23) | Default | Local | [OSC 52] Direct stdout | FAILURE |
+| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/23) | Default | Local | [OSC 52] Direct /dev/tty | FAILURE |
+| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/23) | Default | Local | [WSL] clip.exe pipe | SUCCESS |
+| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/23) | Default | Local | [WSL] powershell.exe | FAILURE |
+| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/23) | Default | Local | [Bypass] File (.clipboard_bypass) | SUCCESS |
+| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/23) | Default | Local | [Bypass] Named Pipe (.clipboard_pipe) | SUCCESS |
+| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/23) | Default | Local | [Bridge] copy.sh wrapper | SUCCESS |
