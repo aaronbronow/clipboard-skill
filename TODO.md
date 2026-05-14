@@ -12,6 +12,7 @@ To provide a seamless, persistent, and portable clipboard history that allows va
 - [x] Implement OSC 52 escape sequence transport.
 - [x] Solve the "Agent Buffer Interception" via TTY Bypassing.
 - [x] Create the first port: `agent-bridge-clipboard`.
+- [x] Automate release process via `Makefile` (`make build`).
 - [x] Automate environment orchestration via `chezmoi`.
 
 ## Phase 2: Session History & Logging (Near Term)
