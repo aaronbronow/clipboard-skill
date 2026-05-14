@@ -6,9 +6,8 @@
 
 Use `tests/verify.sh` to populate this matrix.
 
-| OS | Terminal | Connection | Multiplexer | Method | Status |
+| User Environment | Agent Environment | Agent Mode | Connection | Method | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Ubuntu 24.04.4 LTS | xterm-256color | Local | None | [OSC 52] Direct stdout | FAILURE |
-| Ubuntu 24.04.4 LTS | xterm-256color | Local | None | [OSC 52] Direct /dev/tty | FAILURE |
-| Ubuntu 24.04.4 LTS | xterm-256color | Local | None | [WSL] clip.exe pipe | SUCCESS |
-| Ubuntu 24.04.4 LTS | xterm-256color | Local | None | [WSL] powershell.exe | FAILURE |
+| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/1) | Default | SSH | [OSC 52] Direct stdout | FAILURE |
+| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/1) | Default | SSH | [OSC 52] Direct /dev/tty | FAILURE |
+| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/1) | Default | SSH | [OSC 52] Targeted SSH_TTY (/dev/pts/0) | SUCCESS |

@@ -15,7 +15,7 @@ clear_matrix() {
 
 Use \`tests/verify.sh\` to populate this matrix.
 
-| OS | Terminal | Connection | Multiplexer | Method | Status |
+| User Environment | Agent Environment | Agent Mode | Connection | Method | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 EOF
     echo "Matrix cleared."
@@ -29,10 +29,20 @@ fi
 echo "--- Clipboard Compatibility Tester ---"
 echo "Machine: $(hostname)"
 echo "OS: $(uname -srm)"
+echo "Client: ${CLIENT_OS:-Unknown} / ${CLIENT_TERM:-Unknown}"
 echo "TTY: $(tty)"
 echo "SSH_TTY: $SSH_TTY"
 echo "TERM: $TERM"
 echo "-----------------------------------"
+
+# Clear clipboard at the start to prevent false positives
+echo "Clearing clipboard..."
+if [ -n "$SSH_TTY" ]; then
+    printf '\e]52;c;AA==\a' > "$SSH_TTY"
+else
+    printf '\e]52;c;AA==\a' > /dev/tty
+fi
+sleep 0.5
 
 # Detection
 IS_WSL=false
@@ -61,16 +71,30 @@ test_copy() {
         echo "[$status] Expected '$expected', but got '$pasted'"
     fi
     
-    # Log to COMPATIBILITY.md
-    local os=$(grep PRETTY_NAME /etc/os-release | cut -d '"' -f 2 || uname -s)
-    local terminal=${TERM_PROGRAM:-$TERM}
+    # --- Logging Logic ---
+    local agent_os=$(grep PRETTY_NAME /etc/os-release | cut -d '"' -f 2 || uname -s)
+    
     local connection="Local"
     [ -n "$SSH_TTY" ] && connection="SSH"
-    local multiplexer="None"
-    [ -n "$TMUX" ] && multiplexer="tmux"
+    
+    local multiplexer=""
+    [ -n "$TMUX" ] && multiplexer=", tmux"
+    
+    # Mode detection
+    local mode="Outside CLI"
+    if [ "$GEMINI_CLI" = "1" ]; then
+        mode="${GEMINI_MODE:-Default}"
+        # Heuristic for sandbox if not explicitly provided
+        if [ -z "$GEMINI_MODE" ] && env | grep -qiE "SANDBOX|DOCKER|KUBERNETES"; then
+            mode="Sandbox"
+        fi
+    fi
+    
+    local user_env="${CLIENT_OS:-Unknown} / ${CLIENT_TERM:-Unknown}"
+    local agent_env="${agent_os} (${TERM} on $(tty)${multiplexer})"
     
     printf "| %s | %s | %s | %s | %s | %s |\n" \
-        "$os" "$terminal" "$connection" "$multiplexer" "$full_label" "$status" >> tests/COMPATIBILITY.md
+        "$user_env" "$agent_env" "$mode" "$connection" "$full_label" "$status" >> tests/COMPATIBILITY.md
 }
 
 # --- OSC 52 Category ---
