@@ -1,8 +1,8 @@
 {
-  "name": "clipboard-osc52",
+  "name": "agent-bridge-clipboard",
   "version": "1.0.0",
   "description": "A hybrid clipboard skill for terminal-based agents, supporting SSH, WSL, and macOS via OSC 52.",
-  "skills": ["./.agents/skills/clipboard"],
+  "skills": ["./.agents/skills/agent-bridge-clipboard"],
   "mcpServers": [
     {
       "name": "clipboard-server",

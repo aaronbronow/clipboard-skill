@@ -11,7 +11,7 @@ To provide a seamless, persistent, and portable clipboard history that allows va
 **Goal:** Establish a reliable "Write" path from a remote AI subshell to a local host.
 - [x] Implement OSC 52 escape sequence transport.
 - [x] Solve the "Agent Buffer Interception" via TTY Bypassing.
-- [x] Create the first port: `gemini-clipboard-bridge`.
+- [x] Create the first port: `agent-bridge-clipboard`.
 - [x] Automate environment orchestration via `chezmoi`.
 
 ## Phase 2: Session History & Logging (Near Term)

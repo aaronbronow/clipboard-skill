@@ -1,4 +1,10 @@
-# Project Instructions: Clipboard Skill
+# Project Instructions: Agent Bridge Clipboard
+
+## Project Architecture
+This repository serves as the **Upstream** "Uber" project for developing universal clipboard synchronization skills across multiple AI agent ecosystems (Gemini, Claude, etc.).
+
+- **Upstream (`agent-bridge-clipboard`)**: Responsible for core transport logic, cross-environment compatibility (SSH, WSL, Native), and the universal protocol.
+- **Downstream (`gemini-clipboard-bridge`)**: A specific implementation and bridge for Gemini CLI skills.
 
 ## Clipboard Testing Protocol
 The verification process for the `tests/COMPATIBILITY.md` matrix is handled **strictly** by the `tests/verify.sh` script.

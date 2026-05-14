@@ -1,5 +1,5 @@
 ---
-name: clipboard
+name: agent-bridge-clipboard
 description: Copies text to the host clipboard using OSC 52 sequences, optimized for SSH and nested terminal environments.
 ---
 
