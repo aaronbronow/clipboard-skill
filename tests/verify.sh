@@ -147,9 +147,13 @@ if [ "$IS_MACOS" = true ]; then
 fi
 
 # --- Bypass Category ---
+echo "INFO: To test the File Bypass, ensure this is running on your HOST:"
+echo "      tail -F .clipboard_bypass > \$(tty)"
 test_copy "Bypass" "File (.clipboard_bypass)" "printf '\e]52;c;dGVzdC1maWxlLWJ5cGFzcw==\a' > .clipboard_bypass" "test-file-bypass"
 
 if [ -p ".clipboard_pipe" ]; then
+    echo "INFO: To test the Named Pipe Bypass, ensure this is running on your HOST:"
+    echo "      while true; do cat .clipboard_pipe; done > \$(tty)"
     test_copy "Bypass" "Named Pipe (.clipboard_pipe)" "printf '\e]52;c;dGVzdC1waXBlLWJ5cGFzcw==\a' > .clipboard_pipe" "test-pipe-bypass"
 fi
 
