@@ -40,3 +40,13 @@ test:
 
 release: test build
 	@echo "Release v$(VERSION) prepared in $(DIST_DIR)/"
+
+# Target for downstream projects to consume this repository
+# Usage: UPSTREAM_DIR=../path/to/agent-bridge-clipboard make import-skill
+import-skill:
+	@if [ -z "$(UPSTREAM_DIR)" ]; then echo "Error: UPSTREAM_DIR is not set. Usage: UPSTREAM_DIR=../path/to/agent-bridge-clipboard make import-skill"; exit 1; fi
+	@echo "Importing artifacts from $(UPSTREAM_DIR)..."
+	@if [ ! -d "$(UPSTREAM_DIR)/dist" ]; then echo "Error: dist directory not found in $(UPSTREAM_DIR). Run 'make build' in the upstream first."; exit 1; fi
+	mkdir -p .vendor/agent-bridge-clipboard
+	cp -rv $(UPSTREAM_DIR)/dist/* .vendor/agent-bridge-clipboard/
+	@echo "Successfully imported to .vendor/agent-bridge-clipboard/"
