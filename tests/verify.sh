@@ -3,6 +3,17 @@
 
 # --- Configuration ---
 MATRIX_FILE="tests/COMPATIBILITY.md"
+HEADLESS_FILE=".headless_token"
+
+show_help() {
+    echo "Usage: $0 [options]"
+    echo ""
+    echo "Options:"
+    echo "  --clear               Reset the compatibility matrix."
+    echo "  --headless            Run in headless mode (writes a unique token to clipboard)."
+    echo "  --validate=<token>    Validate a previously written headless token."
+    echo "  --help                Show this help message."
+}
 
 clear_matrix() {
     echo "Clearing $MATRIX_FILE..."
@@ -22,8 +33,60 @@ EOF
     echo "Matrix cleared."
 }
 
-if [[ "$1" == "--clear" ]]; then
-    clear_matrix
+# --- Argument Parsing ---
+for i in "$@"; do
+    case $i in
+        --clear)
+            clear_matrix
+            exit 0
+            ;;
+        --headless)
+            RUN_HEADLESS=true
+            shift
+            ;;
+        --validate=*)
+            VALIDATE_TOKEN="${i#*=}"
+            shift
+            ;;
+        --help)
+            show_help
+            exit 0
+            ;;
+    esac
+done
+
+if [ -n "$VALIDATE_TOKEN" ]; then
+    if [ ! -f "$HEADLESS_FILE" ]; then
+        echo "Error: No headless token found in $HEADLESS_FILE. Run --headless first."
+        exit 1
+    fi
+    EXPECTED=$(cat "$HEADLESS_FILE")
+    if [ "$VALIDATE_TOKEN" == "$EXPECTED" ]; then
+        echo "SUCCESS: Token matches!"
+        rm "$HEADLESS_FILE"
+        exit 0
+    else
+        echo "FAILURE: Expected '$EXPECTED', got '$VALIDATE_TOKEN'"
+        exit 1
+    fi
+fi
+
+if [ "$RUN_HEADLESS" = true ]; then
+    TOKEN="headless-$(date +%s)"
+    echo "Headless mode: Writing '$TOKEN' to clipboard..."
+    echo "$TOKEN" > "$HEADLESS_FILE"
+    
+    # Attempt to copy using the bridge script if it exists
+    BRIDGE_SCRIPT=".agents/skills/agent-bridge-clipboard/scripts/copy.sh"
+    if [ -f "$BRIDGE_SCRIPT" ]; then
+        "$BRIDGE_SCRIPT" "$TOKEN"
+    else
+        # Fallback to direct printf
+        printf "\e]52;c;$(echo -n "$TOKEN" | base64)\a" > /dev/tty 2>/dev/null || \
+        printf "\e]52;c;$(echo -n "$TOKEN" | base64)\a"
+    fi
+    
+    echo "Token written. Now run: $0 --validate=<paste_here>"
     exit 0
 fi
 

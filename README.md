@@ -41,3 +41,16 @@ To run the interactive compatibility verification script:
 ```bash
 CLIENT_OS="Windows" CLIENT_TERM="Windows Terminal" AGENT_MODE="Default" ./tests/verify.sh
 ```
+
+### Headless Testing (Non-Interactive)
+
+To test clipboard transport in non-interactive environments (e.g., within a `run_shell_command` or background task):
+
+1. **Write token to clipboard:**
+   ```bash
+   ./tests/verify.sh --headless
+   ```
+2. **Validate by pasting the result:**
+   ```bash
+   ./tests/verify.sh --validate=<paste_your_clipboard_here>
+   ```
