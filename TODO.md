@@ -43,6 +43,7 @@ Test each combination and update `tests/COMPATIBILITY.md`.
 
 #### Host Terminals
 - [ ] Windows Terminal
+- [ ] VS Code Terminal
 - [ ] iTerm2
 - [ ] Ghostty
 - [ ] Warp

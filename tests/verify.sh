@@ -11,6 +11,7 @@ clear_matrix() {
 
 ## Notes
 - **Windows Terminal:** Requires OSC 52 enabled in settings.
+- **VS Code Terminal:** Requires \`terminal.integrated.allowOsc52\` (or \`terminal.integrated.allowClipboardOperations\`) enabled in settings.
 - **TMUX:** May require \`set -s set-clipboard on\` in \`.tmux.conf\`.
 
 Use \`tests/verify.sh\` to populate this matrix.

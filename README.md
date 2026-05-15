@@ -22,6 +22,7 @@ This summary grid tracks the verified status of the `copy.sh` bridge across vari
 | User Environment | Local (WSL/Native) | Remote (SSH) | Sandbox (Docker) |
 | :--- | :---: | :---: | :---: |
 | 🪟 **Windows Terminal** | ✅ | 🚧 | ✅ |
+| 💻 **VS Code Terminal** | ⏳ | ⏳ | ⏳ |
 | 🪟 **PowerShell** | ⏳ | ⏳ | ⏳ |
 | 🍎 **iTerm2** | ⏳ | ⏳ | ⏳ |
 | 🍎/🐧 **Alacritty** | ⏳ | ⏳ | ⏳ |

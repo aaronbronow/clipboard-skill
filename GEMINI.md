@@ -30,6 +30,7 @@ The verification process for the `tests/COMPATIBILITY.md` matrix is handled **st
 - **Columns**: User Environment, Agent Environment, Agent Mode, Connection, Method, Status.
 
 ## Current Focus
+- **VS Code Terminal Testing**: Investigate and verify OSC 52 support within the VS Code integrated terminal, specifically handling the security gating (`terminal.integrated.allowOsc52`).
 - **SSH Bypass Testing**: The next priority is testing the `SSH_TTY` bypass logic on remote environments (e.g., `ubuntu-dev`).
 - **OSC 52 Troubleshooting**: We've confirmed that standard OSC 52 escapes are captured by the Gemini CLI subshell in local WSL2/xterm-256color environments. Testing via a direct SSH TTY is the next step to verify if we can bypass this capture.
 - **WSL Success**: We have confirmed `clip.exe` and `powershell.exe` as successful fallback methods for local WSL2 sessions.
