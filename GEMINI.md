@@ -59,8 +59,6 @@ Direct clipboard access from the Docker sandbox is restricted by environment iso
 
 ### Sandbox Bypass Protocols (Verified)
 The following protocols bridge the sandbox and host clipboard by using shared workspace files as signaling channels. These mechanisms are abstracted by `copy.sh` and verified via `tests/verify.sh`.
-### Sandbox Bypass Protocols (Verified)
-The following protocols bridge the sandbox and host clipboard by using shared workspace files as signaling channels. These mechanisms are abstracted by `copy.sh` and verified via `tests/verify.sh`.
 
 #### 1. SSH TTY Redirection (Remote/Background)
 - **Status**: **SUCCESS** - Most reliable for remote environments.
@@ -92,14 +90,21 @@ For testing in non-interactive environments (e.g., background tasks, `run_shell_
    ```
    *A mismatch or empty paste indicates capture or transport failure.*
 
+### One-off Prompt Protocol (gemini -p)
+To use the clipboard bridge with one-off prompts, you must elevate the agent's permission mode. Non-interactive mode defaults to a read-only policy that blocks shell tools.
+
+- **Command**: `gemini -p "copy 'it worked!' to the clipboard" --yolo`
+- **Result**: In remote sessions, this triggers the `SSH_TTY` bypass and updates your host clipboard natively.
+
 ## Current Focus
 
 #### Bridge Logic (`copy.sh`)
 The `copy.sh` bridge prioritizes execution as follows:
 1. **Native Tools**: Uses `clip.exe` (WSL) or `pbcopy` (macOS) if available in the local environment.
-2. **Direct TTY**: Writes to `/dev/tty` (effective for remote SSH sessions).
-3. **Bypass Channels**: Writes to both `.clipboard_bypass` and `.clipboard_pipe` (required for Docker Sandboxes).
-4. **Stdout**: Final fallback to the primary output stream.
+2. **SSH TTY Bypass**: Writes to `$SSH_TTY` (e.g., `/dev/pts/0`) for remote background/headless reliability.
+3. **Direct TTY**: Writes to `/dev/tty` (effective for local interactive sessions).
+4. **Bypass Channels**: Writes to both `.clipboard_bypass` and `.clipboard_pipe` (required for Docker Sandboxes).
+5. **Stdout**: Final fallback to the primary output stream.
 
 ## Environment Notes
 - **WSL2 (Ubuntu 24.04)**: Requires `clip.exe` or `powershell.exe` for reliable clipboard access due to subshell output capture.
