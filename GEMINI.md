@@ -14,7 +14,7 @@ The verification process for the `tests/COMPATIBILITY.md` matrix is handled **st
 - **Mandatory Metadata**: You MUST provide client metadata via environment variables for accurate matrix reporting.
 - **Workflow**:
   ```bash
-  CLIENT_OS="Windows" CLIENT_TERM="Windows Terminal" GEMINI_MODE="Default" ./tests/verify.sh
+  CLIENT_OS="Windows" CLIENT_TERM="Windows Terminal" AGENT_MODE="Default" ./tests/verify.sh
   ```
 - **Manual testing bypass**: Do NOT attempt to run manual tests or individual commands for the purpose of updating the matrix. Use the script to ensure consistent logging.
 - **Verification**: When prompted by the script, paste your clipboard content (Ctrl+V/Cmd+V) to verify the result.

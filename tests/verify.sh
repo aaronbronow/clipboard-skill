@@ -99,10 +99,10 @@ test_copy() {
     
     # Mode detection
     local mode="Outside CLI"
-    if [ "$GEMINI_CLI" = "1" ]; then
-        mode="${GEMINI_MODE:-Default}"
+    if [ "$GEMINI_CLI" = "1" ] || [ "$AGENT_CLI" = "1" ]; then
+        mode="${AGENT_MODE:-${GEMINI_MODE:-Default}}"
         # Heuristic for sandbox if not explicitly provided
-        if [ -z "$GEMINI_MODE" ] && env | grep -qiE "SANDBOX|DOCKER|KUBERNETES"; then
+        if [ -z "$AGENT_MODE" ] && [ -z "$GEMINI_MODE" ] && env | grep -qiE "SANDBOX|DOCKER|KUBERNETES"; then
             mode="Sandbox"
         fi
     fi
@@ -136,6 +136,16 @@ if [ "$IS_WSL" = true ]; then
     POWERSHELL_EXE=$(command -v powershell.exe || echo "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
     if [ -f "$POWERSHELL_EXE" ] || command -v powershell.exe >/dev/null; then
         test_copy "WSL" "powershell.exe" "echo -n 'test-powershell' | \"$POWERSHELL_EXE\" -Command Set-Clipboard" "test-powershell"
+    fi
+fi
+
+# --- Windows (Native) Category ---
+if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+    if command -v clip.exe >/dev/null; then
+        test_copy "Windows" "clip.exe" "echo -n 'test-native-clip' | clip.exe" "test-native-clip"
+    fi
+    if command -v powershell.exe >/dev/null; then
+        test_copy "Windows" "powershell.exe" "echo -n 'test-native-powershell' | powershell.exe -Command Set-Clipboard" "test-native-powershell"
     fi
 fi
 
