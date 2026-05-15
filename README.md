@@ -39,7 +39,7 @@ This summary grid tracks the verified status of the `copy.sh` bridge across vari
 To run the interactive compatibility verification script:
 
 ```bash
-CLIENT_OS="Windows" CLIENT_TERM="Windows Terminal" AGENT_MODE="Default" ./tests/verify.sh
+CLIENT_OS="Windows" CLIENT_TERM="Windows Terminal" AGENT_MODE="Default" make verify
 ```
 
 ### Headless Testing (Non-Interactive)
@@ -48,9 +48,9 @@ To test clipboard transport in non-interactive environments (e.g., within a `run
 
 1. **Write token to clipboard:**
    ```bash
-   ./tests/verify.sh --headless
+   make headless METHOD=osc52-ssh
    ```
 2. **Validate by pasting the result:**
    ```bash
-   ./tests/verify.sh --validate=<paste_your_clipboard_here>
+   make validate TOKEN=<paste_your_clipboard_here>
    ```

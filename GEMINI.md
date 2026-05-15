@@ -78,17 +78,17 @@ The following protocols bridge the sandbox and host clipboard by using shared wo
 - **Mechanism**: The system writes OSC 52 escape sequences to `.clipboard_bypass`.
 
 ### Headless Verification Protocol
-For testing in non-interactive environments (e.g., background tasks, `run_shell_command`), use the Headless Mode in `tests/verify.sh`.
+For testing in non-interactive environments (e.g., background tasks, `run_shell_command`), use the Headless Mode via the `Makefile`.
 
 1. **Initiate Test (Agent)**: 
    ```bash
-   ./tests/verify.sh --headless --method=<method_name>
+   make headless METHOD=<method_name>
    ```
    *Common methods: `osc52-ssh`, `osc52-stdout`, `bypass-file`.*
 2. **Retrieve Token (User)**: The script generates a unique token and attempts to write it to the clipboard.
 3. **Validate Result (User)**:
    ```bash
-   ./tests/verify.sh --validate=<paste_clipboard_here>
+   make validate TOKEN=<paste_clipboard_here>
    ```
    *A mismatch or empty paste indicates capture or transport failure.*
 

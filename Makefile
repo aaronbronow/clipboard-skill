@@ -5,7 +5,7 @@ DIST_DIR = dist
 SKILL_SRC = .agents/skills/agent-bridge-clipboard
 COMMANDS_SRC = commands/abc
 
-.PHONY: all build clean test release
+.PHONY: all build clean test release verify headless validate matrix-clear
 
 all: build
 
@@ -32,11 +32,22 @@ build: clean
 	cp LICENSE $(DIST_DIR)/
 	cp GEMINI.md $(DIST_DIR)/
 
-test:
-	@echo "Running verification tests..."
-	@./tests/verify.sh --clear
-	@# Note: verify.sh is interactive, this just ensures it can start and clear.
-	@# Full interactive test requires manual execution.
+# --- Testing & Verification ---
 
-release: test build
+test: verify
+
+verify:
+	./tests/verify.sh
+
+headless:
+	./tests/verify.sh --headless --method=$(or $(METHOD),bridge)
+
+validate:
+	@if [ -z "$(TOKEN)" ]; then echo "Error: Use 'make validate TOKEN=<token>'"; exit 1; fi
+	./tests/verify.sh --validate=$(TOKEN)
+
+matrix-clear:
+	./tests/verify.sh --clear
+
+release: matrix-clear build
 	@echo "Release v$(VERSION) prepared in $(DIST_DIR)/"
