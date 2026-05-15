@@ -59,16 +59,40 @@ Direct clipboard access from the Docker sandbox is restricted by environment iso
 
 ### Sandbox Bypass Protocols (Verified)
 The following protocols bridge the sandbox and host clipboard by using shared workspace files as signaling channels. These mechanisms are abstracted by `copy.sh` and verified via `tests/verify.sh`.
+### Sandbox Bypass Protocols (Verified)
+The following protocols bridge the sandbox and host clipboard by using shared workspace files as signaling channels. These mechanisms are abstracted by `copy.sh` and verified via `tests/verify.sh`.
 
-#### 1. Named Pipe (FIFO)
-- **Status**: **SUCCESS** - Preferred for low-latency.
+#### 1. SSH TTY Redirection (Remote/Background)
+- **Status**: **SUCCESS** - Most reliable for remote environments.
+- **Mechanism**: Writing directly to the `$SSH_TTY` device (e.g., `/dev/pts/0`) bypasses Gemini CLI subshell capture, even from background processes.
+- **Command**: `printf '\e]52;c;... \a' > $SSH_TTY`
+
+#### 2. Named Pipe (FIFO)
+- **Status**: **SUCCESS** - Preferred for low-latency local sandboxes.
 - **Host Listener**: `while true; do cat .clipboard_pipe; done > $(tty)`
 - **Mechanism**: The system writes OSC 52 escape sequences to `.clipboard_pipe`.
 
-#### 2. File-Based signaling
-- **Status**: **SUCCESS** - Robust fallback.
-- **Host Listener**: `tail -F .clipboard_bypass > $(tty)`
+#### 3. File-Based signaling
+- **Status**: **SUCCESS** - Robust fallback for local sandboxes.
+- **Host Listener**: `tail -F .clipboard_bypass > $(tty) &` (Can be run in background of same session).
 - **Mechanism**: The system writes OSC 52 escape sequences to `.clipboard_bypass`.
+
+### Headless Verification Protocol
+For testing in non-interactive environments (e.g., background tasks, `run_shell_command`), use the Headless Mode in `tests/verify.sh`.
+
+1. **Initiate Test (Agent)**: 
+   ```bash
+   ./tests/verify.sh --headless --method=<method_name>
+   ```
+   *Common methods: `osc52-ssh`, `osc52-stdout`, `bypass-file`.*
+2. **Retrieve Token (User)**: The script generates a unique token and attempts to write it to the clipboard.
+3. **Validate Result (User)**:
+   ```bash
+   ./tests/verify.sh --validate=<paste_clipboard_here>
+   ```
+   *A mismatch or empty paste indicates capture or transport failure.*
+
+## Current Focus
 
 #### Bridge Logic (`copy.sh`)
 The `copy.sh` bridge prioritizes execution as follows:

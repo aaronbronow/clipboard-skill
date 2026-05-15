@@ -11,8 +11,15 @@ show_help() {
     echo "Options:"
     echo "  --clear               Reset the compatibility matrix."
     echo "  --headless            Run in headless mode (writes a unique token to clipboard)."
+    echo "  --method=<name>       Target a specific method for headless mode."
     echo "  --validate=<token>    Validate a previously written headless token."
     echo "  --help                Show this help message."
+    echo ""
+    echo "Methods:"
+    echo "  osc52-stdout, osc52-tty, osc52-ssh, osc52-tmux"
+    echo "  wsl-clip, wsl-powershell"
+    echo "  bypass-file, bypass-pipe"
+    echo "  bridge"
 }
 
 clear_matrix() {
@@ -44,8 +51,13 @@ for i in "$@"; do
             RUN_HEADLESS=true
             shift
             ;;
+        --method=*)
+            TARGET_METHOD="${i#*=}"
+            shift
+            ;;
         --validate=*)
             VALIDATE_TOKEN="${i#*=}"
+            DO_VALIDATE=true
             shift
             ;;
         --help)
@@ -55,7 +67,26 @@ for i in "$@"; do
     esac
 done
 
-if [ -n "$VALIDATE_TOKEN" ]; then
+get_method_cmd() {
+    local method=$1
+    local token=$2
+    local b64_token=$(echo -n "$token" | base64)
+
+    case $method in
+        osc52-stdout)     echo "printf '\e]52;c;${b64_token}\a'" ;;
+        osc52-tty)        echo "printf '\e]52;c;${b64_token}\a' > /dev/tty" ;;
+        osc52-ssh)        echo "printf '\e]52;c;${b64_token}\a' > $SSH_TTY" ;;
+        osc52-tmux)       echo "printf '\ePtmux;\e\e]52;c;${b64_token}\a\e\\\' > ${SSH_TTY:-/dev/tty}" ;;
+        wsl-clip)         echo "echo -n '${token}' | clip.exe" ;;
+        wsl-powershell)   echo "echo -n '${token}' | powershell.exe -Command Set-Clipboard" ;;
+        bypass-file)      echo "printf '\e]52;c;${b64_token}\a' > .clipboard_bypass" ;;
+        bypass-pipe)      echo "printf '\e]52;c;${b64_token}\a' > .clipboard_pipe" ;;
+        bridge)           echo ".agents/skills/agent-bridge-clipboard/scripts/copy.sh '${token}'" ;;
+        *)                return 1 ;;
+    esac
+}
+
+if [ "$DO_VALIDATE" = true ]; then
     if [ ! -f "$HEADLESS_FILE" ]; then
         echo "Error: No headless token found in $HEADLESS_FILE. Run --headless first."
         exit 1
@@ -73,20 +104,21 @@ fi
 
 if [ "$RUN_HEADLESS" = true ]; then
     TOKEN="headless-$(date +%s)"
-    echo "Headless mode: Writing '$TOKEN' to clipboard..."
+    METHOD="${TARGET_METHOD:-bridge}"
+    CMD=$(get_method_cmd "$METHOD" "$TOKEN")
+    
+    if [ $? -ne 0 ]; then
+        echo "Error: Unknown method '$METHOD'"
+        exit 1
+    fi
+
+    echo "Headless mode [Method: $METHOD]: Writing '$TOKEN' to clipboard..."
     echo "$TOKEN" > "$HEADLESS_FILE"
     
-    # Attempt to copy using the bridge script if it exists
-    BRIDGE_SCRIPT=".agents/skills/agent-bridge-clipboard/scripts/copy.sh"
-    if [ -f "$BRIDGE_SCRIPT" ]; then
-        "$BRIDGE_SCRIPT" "$TOKEN"
-    else
-        # Fallback to direct printf
-        printf "\e]52;c;$(echo -n "$TOKEN" | base64)\a" > /dev/tty 2>/dev/null || \
-        printf "\e]52;c;$(echo -n "$TOKEN" | base64)\a"
-    fi
+    # Execute the selected command
+    eval "$CMD" 2>/dev/null || eval "$CMD"
     
-    echo "Token written. Now run: $0 --validate=<paste_here>"
+    echo "Token written using $METHOD. Now run: $0 --validate=<paste_here>"
     exit 0
 fi
 
