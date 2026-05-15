@@ -167,6 +167,11 @@ test_copy() {
     local expected=$4
     local full_label="[$category] $label"
     
+    # Ensure matrix file exists with headers before appending
+    if [ ! -f "$MATRIX_FILE" ]; then
+        clear_matrix
+    fi
+
     echo "Clearing clipboard..."
     clear_clipboard
 
