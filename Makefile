@@ -37,6 +37,11 @@ build: clean
 test: verify
 
 verify:
+	@if [ -z "$$CLIENT_OS" ] || [ -z "$$CLIENT_TERM" ]; then \
+		echo "TIP: Set CLIENT_OS and CLIENT_TERM for accurate matrix reporting."; \
+		echo "     Example: CLIENT_OS=\"macOS\" CLIENT_TERM=\"iTerm2\" make verify"; \
+		echo ""; \
+	fi
 	./tests/verify.sh
 
 headless:

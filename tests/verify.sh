@@ -149,6 +149,10 @@ echo "--- Clipboard Compatibility Tester ---"
 echo "Machine: $(hostname)"
 echo "OS: $(uname -srm)"
 echo "Client: ${CLIENT_OS:-Unknown} / ${CLIENT_TERM:-Unknown}"
+if [ -z "$CLIENT_OS" ] || [ -z "$CLIENT_TERM" ]; then
+    echo "TIP: Provide metadata for the matrix by setting CLIENT_OS and CLIENT_TERM:"
+    echo "     CLIENT_OS=\"Windows\" CLIENT_TERM=\"Windows Terminal\" $0"
+fi
 echo "TTY: $(tty)"
 echo "SSH_TTY: $SSH_TTY"
 echo "TERM: $TERM"
