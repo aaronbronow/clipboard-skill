@@ -10,6 +10,7 @@ Use `tests/verify.sh` to populate this matrix.
 | User Environment | Agent Environment | Agent Mode | Connection | Method | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/1) | Default | SSH | [OSC 52] Direct SSH_TTY (/dev/pts/0) | SUCCESS (Background) |
+| Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/1) | YOLO | SSH | [Bridge] gemini -p ... --yolo | SUCCESS (Native) |
 | Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/1) | Default | SSH | [Bypass] File (.clipboard_bypass) | SUCCESS (Listener) |
 | Windows / Windows Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/1) | Default | SSH | [Bypass] File (Same-Session Background) | SUCCESS |
 | Windows / VS Code Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/1) | Default | SSH | [Bypass] File (Listener) | SUCCESS |
