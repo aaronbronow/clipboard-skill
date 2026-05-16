@@ -1,22 +1,26 @@
-# Agent Bridge Clipboard
+# Agent Bridge Clipboard (ABC)
 
-Universal clipboard synchronization for AI agent ecosystems.
-
-This project provides the core transport logic and cross-environment compatibility (SSH, WSL, Native) required to bridge AI agent sandboxes and subshells with the host clipboard.
+A universal clipboard synchronization bridge and testing suite for AI agents (Gemini, Claude, etc.). This project provides the core transport logic and escape sequence protocols required to bridge isolated agent environments (Docker, SSH, WSL) with the host system clipboard.
 
 ## Architecture
-
 - **Upstream (`agent-bridge-clipboard`)**: This repository. Core transport protocols and compatibility drivers.
 - **Downstream (`gemini-clipboard-bridge`)**: Implementation and bridge for Gemini CLI skills.
 
-## Features
+## Project Structure
+- `.agents/skills/`: The "Skill" definitions for various agent ecosystems.
+  - `agent-bridge-clipboard/`: Universal logic for Gemini CLI.
+- `commands/abc/`: CLI command definitions for extension packaging.
+- `tests/`: Compatibility matrix and verification scripts.
 
-- **Multi-Transport Support**: OSC 52, Native (clip.exe, pbcopy), and SSH TTY bypass.
-- **Sandbox Bypasses**: File-based and FIFO (Named Pipe) signaling for isolated environments (e.g., Docker/Gemini Sandbox).
-- **Auto-Detection**: `copy.sh` automatically selects the most reliable transport for the current environment.
+## Core Logic: `copy.sh`
+The heart of the project is the `scripts/copy.sh` bridge. It prioritizes transport methods based on environment detection:
+1. **Sandbox Detection**: Identifies if running in a Docker/Container environment.
+2. **Native**: `clip.exe` (WSL) or `pbcopy` (macOS).
+3. **SSH TTY Bypass**: Writes to `$SSH_TTY` for remote background reliability.
+4. **Bypass**: File-based signaling via `.clipboard_bypass` (Mandatory for Docker sandboxes).
+5. **Transport**: Direct OSC 52 escape sequences to `/dev/tty` or `stdout`.
 
 ## Compatibility Matrix
-
 This summary grid tracks the verified status of the `copy.sh` bridge across various user environments. Detailed test logs are maintained in [tests/COMPATIBILITY.md](tests/COMPATIBILITY.md).
 
 | User Environment | Local (WSL/Native) | Remote (SSH) | Sandbox (Docker) |
@@ -33,6 +37,34 @@ This summary grid tracks the verified status of the `copy.sh` bridge across vari
 - 🚧 : Testing in Progress
 - ⏳ : TBD / Not yet verified
 - ❌ : Known Issue / Unsupported
+
+## Developer Workflow
+
+### Local Development & Testing
+To avoid the `gemini extensions install` cycle, use the isolated sandbox target:
+
+1. **Deploy to Sandbox**:
+   ```bash
+   make deploy-sandbox
+   ```
+2. **Test in Isolation**:
+   ```bash
+   cd ../agent-bridge-clipboard-sandbox
+   gemini --sandbox
+   ```
+
+### Debugging
+Enable detailed execution logging by creating a flag file:
+```bash
+touch .clipboard_debug
+tail -f clipboard_debug.log
+```
+
+### Sandbox Bypass Setup
+When testing in a Docker sandbox, run this in your **host terminal** to bridge the bypass file to your clipboard:
+```bash
+tail -F .clipboard_bypass > $(tty)
+```
 
 ## Testing
 
@@ -54,3 +86,11 @@ To test clipboard transport in non-interactive environments (e.g., within a `run
    ```bash
    make validate TOKEN=<paste_your_clipboard_here>
    ```
+
+## Contributing
+- **Adding a Platform**: Update `copy.sh` with the new detection logic and transport method.
+- **Porting to a New Agent**: Create a new subfolder in `.agents/skills/` following the ecosystem's manifest format.
+- **Updating the Matrix**: Run `./tests/verify.sh` in the target environment and update `tests/COMPATIBILITY.md`.
+
+## License
+MIT
