@@ -42,6 +42,10 @@ if [ "$IS_SANDBOX" = false ]; then
             log_debug "Found clip.exe at absolute path, using it"
             echo -n "$*" | /mnt/c/Windows/System32/clip.exe
             exit 0
+        elif command -v powershell.exe >/dev/null; then
+            log_debug "Found powershell.exe, using it"
+            echo -n "$*" | powershell.exe -NoProfile -NonInteractive -Command "Set-Clipboard -Value \$Input"
+            exit 0
         fi
     fi
 

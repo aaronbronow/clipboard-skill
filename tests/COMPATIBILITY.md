@@ -27,3 +27,18 @@ Use `tests/verify.sh` to populate this matrix.
 | Windows / VS Code Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/1) | Outside CLI | SSH | [OSC 52] Direct /dev/tty | SUCCESS |
 | Windows / VS Code Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/1) | Outside CLI | SSH | [Bypass] File (.clipboard_bypass) | SUCCESS |
 | Windows / VS Code Terminal | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/1) | Outside CLI | SSH | [Bridge] copy.sh wrapper | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [OSC 52] Direct stdout | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [OSC 52] Direct /dev/tty | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [WSL] clip.exe pipe | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [WSL] powershell.exe | FAILURE |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [Bypass] File (.clipboard_bypass) | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [Bridge] copy.sh wrapper | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [OSC 52] Direct stdout | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [OSC 52] Direct /dev/tty | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [WSL] clip.exe pipe | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [OSC 52] Direct stdout | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [OSC 52] Direct /dev/tty | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [WSL] clip.exe pipe | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [WSL] powershell.exe | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [Bypass] File (.clipboard_bypass) | SUCCESS |
+| Unknown / Unknown | Ubuntu 24.04.4 LTS (xterm-256color on /dev/pts/5) | Outside CLI | Local | [Bridge] copy.sh wrapper | SUCCESS |

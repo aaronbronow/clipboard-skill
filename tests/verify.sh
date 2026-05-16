@@ -164,6 +164,10 @@ if grep -qi microsoft /proc/version 2>/dev/null; then IS_WSL=true; fi
 IS_MACOS=false
 if [[ "$OSTYPE" == "darwin"* ]]; then IS_MACOS=true; fi
 
+# --- State ---
+PASS_COUNT=0
+FAIL_COUNT=0
+
 test_copy() {
     local category=$1
     local label=$2
@@ -188,9 +192,11 @@ test_copy() {
     if [ "$pasted" == "$expected" ]; then
         status="SUCCESS"
         echo "[$status] Clipboard matches: '$pasted'"
+        PASS_COUNT=$((PASS_COUNT + 1))
     else
         status="FAILURE"
         echo "[$status] Expected '$expected', but got '$pasted'"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
     fi
     
     # --- Logging Logic ---
@@ -240,7 +246,7 @@ if [ "$IS_WSL" = true ]; then
     
     POWERSHELL_EXE=$(command -v powershell.exe || echo "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
     if [ -f "$POWERSHELL_EXE" ] || command -v powershell.exe >/dev/null; then
-        test_copy "WSL" "powershell.exe" "echo -n 'test-powershell' | \"$POWERSHELL_EXE\" -Command Set-Clipboard" "test-powershell"
+        test_copy "WSL" "powershell.exe" "echo -n 'test-powershell' | \"$POWERSHELL_EXE\" -NoProfile -NonInteractive -Command \"Set-Clipboard -Value \\\$Input\"" "test-powershell"
     fi
 fi
 
@@ -279,3 +285,9 @@ fi
 
 echo "-----------------------------------"
 echo "Verification complete."
+echo "Summary: $PASS_COUNT PASSED, $FAIL_COUNT FAILED"
+if [ $FAIL_COUNT -eq 0 ]; then
+    echo "RESULT: ALL TESTS PASSED ✅"
+else
+    echo "RESULT: SOME TESTS FAILED ❌"
+fi
