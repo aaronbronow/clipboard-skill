@@ -6,8 +6,13 @@ description: Copies text to the host clipboard using OSC 52 sequences, optimized
 # Instructions
 When the user wants to copy text, code blocks, or command output to their clipboard:
 1. Identify the specific text to be copied.
-2. Use `run_shell_command` to execute `scripts/copy.sh "the text to copy"`.
-3. The script is designed to bypass environment isolation by writing directly to the active TTY or a bypass channel.
+2. **Sandbox Awareness**: Before or after copying, if you suspect the environment is a Docker sandbox or container (e.g., restricted permissions, isolated shell):
+    - Inform the user that clipboard access from a sandbox requires a host-side listener.
+    - Provide the following command for them to run in their host terminal:
+      ```bash
+      tail -F .clipboard_bypass > $(tty)
+      ```
+3. Use `run_shell_command` to execute `scripts/copy.sh "the text to copy"`.
 4. Confirm to the user once the text has been successfully copied.
 
 ## Sandbox Setup (Action Required by User)

@@ -103,11 +103,22 @@ To use the clipboard bridge with one-off prompts, you must elevate the agent's p
 
 #### Bridge Logic (`copy.sh`)
 The `copy.sh` bridge prioritizes execution as follows:
-1. **Native Tools**: Uses `clip.exe` (WSL) or `pbcopy` (macOS) if available in the local environment.
-2. **SSH TTY Bypass**: Writes to `$SSH_TTY` (e.g., `/dev/pts/0`) for remote background/headless reliability.
-3. **Direct TTY**: Writes to `/dev/tty` (effective for local interactive sessions).
-4. **Bypass Channels**: Writes to both `.clipboard_bypass` and `.clipboard_pipe` (required for Docker Sandboxes).
-5. **Stdout**: Final fallback to the primary output stream.
+1. **Sandbox Detection**: Identifies if running in a Docker/Container environment.
+2. **Native Tools**: Uses `clip.exe` (WSL) or `pbcopy` (macOS) if available in the local (non-sandbox) environment.
+3. **SSH TTY Bypass**: Writes to `$SSH_TTY` (e.g., `/dev/pts/0`) for remote background/headless reliability.
+4. **Bypass Channels (Sandbox Priority)**: Writes OSC 52 sequences to both `.clipboard_bypass` and `.clipboard_pipe`.
+5. **Direct TTY**: Writes to `/dev/tty` (effective for local interactive sessions).
+6. **Stdout**: Final fallback to the primary output stream.
+
+### Troubleshooting & Debugging
+If the clipboard is not syncing, you can enable detailed logging:
+- **Enable**: Create an empty file named `.clipboard_debug` in the project root or set `ABC_DEBUG=1` in your environment.
+- **Output**: Logs are written to `clipboard_debug.log`.
+
+### Development Workflow
+To test changes in an isolated environment without a full extension reinstall:
+1. **Deploy**: Run `make deploy-sandbox` to copy local skill files to `../agent-bridge-clipboard-sandbox`.
+2. **Test**: Run `gemini --sandbox` in the sandbox directory.
 
 ## Environment Notes
 - **WSL2 (Ubuntu 24.04)**: Requires `clip.exe` or `powershell.exe` for reliable clipboard access due to subshell output capture.

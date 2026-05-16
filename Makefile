@@ -66,3 +66,14 @@ import-skill:
 	mkdir -p .vendor/agent-bridge-clipboard
 	cp -rv $(UPSTREAM_DIR)/dist/* .vendor/agent-bridge-clipboard/
 	@echo "Successfully imported to .vendor/agent-bridge-clipboard/"
+
+# Target for isolated local sandbox testing
+# Usage: SANDBOX_DIR=../my-sandbox make deploy-sandbox
+SANDBOX_DIR ?= ../agent-bridge-clipboard-sandbox
+deploy-sandbox:
+	@echo "Deploying to local sandbox: $(SANDBOX_DIR)..."
+	mkdir -p $(SANDBOX_DIR)/.agents/skills/agent-bridge-clipboard/scripts
+	cp $(SKILL_SRC)/SKILL.md $(SANDBOX_DIR)/.agents/skills/agent-bridge-clipboard/
+	cp $(SKILL_SRC)/scripts/copy.sh $(SANDBOX_DIR)/.agents/skills/agent-bridge-clipboard/scripts/
+	chmod +x $(SANDBOX_DIR)/.agents/skills/agent-bridge-clipboard/scripts/copy.sh
+	@echo "Deployment complete. You can now run 'gemini --sandbox' in $(SANDBOX_DIR)"
