@@ -1,7 +1,5 @@
 #!/bin/bash
 # Gemini Skill Clipboard Bridge
-# This script works across WSL, macOS, and Linux, including sandboxed environments.
-
 # Toggleable Debug Mode:
 # Enable by creating a file named '.clipboard_debug' in the project root
 # or by setting ABC_DEBUG=1 in the environment.
