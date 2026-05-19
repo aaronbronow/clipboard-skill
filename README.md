@@ -1,15 +1,19 @@
 # Agent Bridge Clipboard (ABC)
 
-A universal clipboard synchronization bridge and testing suite for AI agents (Gemini, Claude, etc.). This project provides the core transport logic and escape sequence protocols required to bridge isolated agent environments (Docker, SSH, WSL) with the host system clipboard.
+A universal clipboard synchronization bridge and testing suite for AI agents (Gemini, Claude, Copilot, etc.). This project provides the core transport logic and escape sequence protocols required to bridge isolated agent environments (Docker, SSH, WSL) with the host system clipboard.
 
 ## Architecture
-- **Upstream (`agent-bridge-clipboard`)**: This repository. Core transport protocols and compatibility drivers.
-- **Downstream (`gemini-clipboard-bridge`)**: Implementation and bridge for Gemini CLI skills.
+- **Upstream (`agent-bridge-clipboard`)**: This repository. Contains core transport protocols and provides agent-specific "raw skills" for downstream consumption.
+- **Standalone Extension**: This repository also serves as the primary source for the `agent-bridge-clipboard` Gemini CLI extension.
 
 ## Project Structure
-- `.agents/skills/`: The "Skill" definitions for various agent ecosystems.
-  - `agent-bridge-clipboard/`: Universal logic for Gemini CLI.
-- `commands/abc/`: CLI command definitions for extension packaging.
+- `scripts/`: Core transport logic (`copy.sh`) for the main ABC extension.
+- `SKILL.md`: The main ABC skill definition.
+- `skills/`: Discrete, logic-only bridge implementations for other agent ecosystems.
+  - `gemini-clipboard-bridge/`: Raw skill for downstream Gemini extensions.
+  - `claude-clipboard-bridge/`: Placeholder for Claude MCP integration.
+  - `copilot-clipboard-bridge/`: Placeholder for VS Code Copilot integration.
+- `commands/abc/`: CLI command definitions for the standalone extension.
 - `tests/`: Compatibility matrix and verification scripts.
 
 ## Core Logic: `copy.sh`
@@ -20,32 +24,19 @@ The heart of the project is the `scripts/copy.sh` bridge. It prioritizes transpo
 4. **Bypass**: File-based signaling via `.clipboard_bypass` (Mandatory for Docker sandboxes).
 5. **Transport**: Direct OSC 52 escape sequences to `/dev/tty` or `stdout`.
 
-## Compatibility Matrix
-This summary grid tracks the verified status of the `copy.sh` bridge across various user environments. Detailed test logs are maintained in [tests/COMPATIBILITY.md](tests/COMPATIBILITY.md).
+## Distribution Model
+This project uses a hybrid distribution model to support both end-users and downstream developers. See [DISTRIBUTION.md](DISTRIBUTION.md) for detailed integration guides.
 
-| User Environment | Local (WSL/Native) | Remote (SSH) | Sandbox (Docker) |
-| :--- | :---: | :---: | :---: |
-| 🪟 **Windows Terminal** | ✅ | 🚧 | ✅ |
-| 💻 **VS Code Terminal** | ⏳ | ⏳ | ⏳ |
-| 🪟 **PowerShell** | ⏳ | ⏳ | ⏳ |
-| 🍎 **iTerm2** | ⏳ | ⏳ | ⏳ |
-| 🍎/🐧 **Alacritty** | ⏳ | ⏳ | ⏳ |
-| 🍎/🐧 **Ghostty** | ⏳ | ⏳ | ⏳ |
-
-**Legend:**
-- ✅ : Fully Supported
-- 🚧 : Testing in Progress
-- ⏳ : TBD / Not yet verified
-- ❌ : Known Issue / Unsupported
+- **Standalone**: `dist/agent-bridge-clipboard/` (Full Gemini extension).
+- **Raw Skills**: `dist/*-clipboard-bridge/` (Flattened, logic-only packages).
 
 ## Developer Workflow
 
 ### Local Development & Testing
-To avoid the `gemini extensions install` cycle, use the isolated sandbox target:
-
+To test specific bridges in an isolated environment:
 1. **Deploy to Sandbox**:
    ```bash
-   make deploy-sandbox
+   TARGET_SKILL=gemini-clipboard-bridge make deploy-sandbox
    ```
 2. **Test in Isolation**:
    ```bash
@@ -60,24 +51,14 @@ touch .clipboard_debug
 tail -f clipboard_debug.log
 ```
 
-### Sandbox Bypass Setup
-When testing in a Docker sandbox, run this in your **host terminal** to bridge the bypass file to your clipboard:
-```bash
-tail -F .clipboard_bypass > $(tty)
-```
-
 ## Testing
-
 To run the interactive compatibility verification script:
-
 ```bash
 CLIENT_OS="Windows" CLIENT_TERM="Windows Terminal" AGENT_MODE="Default" make verify
 ```
 
 ### Headless Testing (Non-Interactive)
-
-To test clipboard transport in non-interactive environments (e.g., within a `run_shell_command` or background task):
-
+To test clipboard transport in non-interactive environments (e.g., within a `run_shell_command`):
 1. **Write token to clipboard:**
    ```bash
    make headless METHOD=osc52-ssh
@@ -86,11 +67,6 @@ To test clipboard transport in non-interactive environments (e.g., within a `run
    ```bash
    make validate TOKEN=<paste_your_clipboard_here>
    ```
-
-## Contributing
-- **Adding a Platform**: Update `copy.sh` with the new detection logic and transport method.
-- **Porting to a New Agent**: Create a new subfolder in `.agents/skills/` following the ecosystem's manifest format.
-- **Updating the Matrix**: Run `./tests/verify.sh` in the target environment and update `tests/COMPATIBILITY.md`.
 
 ## License
 MIT

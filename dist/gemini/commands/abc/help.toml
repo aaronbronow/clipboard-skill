@@ -1,8 +1,0 @@
-description = "Display help for the agent-bridge-clipboard"
-prompt = """
-<task>Display the following help information for Agent Bridge Clipboard (/abc) to the user:
-- /abc:copy <text> - Copies text to the host clipboard.
-- /abc:version      - Shows the current version.
-- /abc:help         - Shows this help message.
-</task>
-"""

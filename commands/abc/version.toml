@@ -1,2 +1,0 @@
-description = "Check the version of the agent-bridge-clipboard"
-prompt = "<task>Inform the user that the current version of agent-bridge-clipboard is 1.0.3. Output ONLY the version number or a very short confirmation.</task>"

@@ -1,7 +1,6 @@
 #!/bin/bash
-# Gemini Skill Clipboard Bridge
-# Toggleable Debug Mode:
-# Enable by creating a file named '.clipboard_debug' in the project root
+# Agent Bridge Clipboard copy utility script
+# Enable debug mode by creating a file named '.clipboard_debug' in the agent working directory
 # or by setting ABC_DEBUG=1 in the environment.
 DEBUG=false
 if [ -f ".clipboard_debug" ] || [ "$ABC_DEBUG" = "1" ]; then

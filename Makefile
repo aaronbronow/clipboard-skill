@@ -2,8 +2,8 @@
 
 VERSION ?= $(shell jq -r .version gemini-extension.json)
 DIST_DIR = dist
-SKILL_SRC = .agents/skills/agent-bridge-clipboard
-COMMANDS_SRC = commands/abc
+
+SKILLS = gemini-clipboard-bridge claude-clipboard-bridge copilot-clipboard-bridge
 
 .PHONY: all build clean test release verify headless validate matrix-clear
 
@@ -15,22 +15,27 @@ clean:
 
 build: clean
 	@echo "Building release v$(VERSION)..."
-	mkdir -p $(DIST_DIR)/gemini/skills/agent-bridge-clipboard/scripts
-	mkdir -p $(DIST_DIR)/gemini/commands/abc
 	
-	# Copy Skill files
-	cp $(SKILL_SRC)/SKILL.md $(DIST_DIR)/gemini/skills/agent-bridge-clipboard/
-	cp $(SKILL_SRC)/scripts/copy.sh $(DIST_DIR)/gemini/skills/agent-bridge-clipboard/scripts/
-	chmod +x $(DIST_DIR)/gemini/skills/agent-bridge-clipboard/scripts/copy.sh
-	
-	# Copy CLI Commands
-	cp $(COMMANDS_SRC)/*.toml $(DIST_DIR)/gemini/commands/abc/
-	
-	# Metadata
-	echo $(VERSION) > $(DIST_DIR)/VERSION
-	cp gemini-extension.json $(DIST_DIR)/
-	cp LICENSE $(DIST_DIR)/
-	cp GEMINI.md $(DIST_DIR)/
+	# 1. Build the main agent-bridge-clipboard from root
+	@echo "Preparing agent-bridge-clipboard..."
+	mkdir -p $(DIST_DIR)/agent-bridge-clipboard/scripts
+	mkdir -p $(DIST_DIR)/agent-bridge-clipboard/commands/abc
+	cp SKILL.md $(DIST_DIR)/agent-bridge-clipboard/
+	cp scripts/copy.sh $(DIST_DIR)/agent-bridge-clipboard/scripts/
+	chmod +x $(DIST_DIR)/agent-bridge-clipboard/scripts/copy.sh
+	cp commands/abc/*.toml $(DIST_DIR)/agent-bridge-clipboard/commands/abc/
+	cp gemini-extension.json $(DIST_DIR)/agent-bridge-clipboard/
+	cp LICENSE $(DIST_DIR)/agent-bridge-clipboard/
+	cp GEMINI.md $(DIST_DIR)/agent-bridge-clipboard/
+
+	# 2. Build the other discrete bridges from skills/
+	@for skill in $(SKILLS); do \
+		echo "Preparing $$skill..."; \
+		mkdir -p $(DIST_DIR)/$$skill/scripts; \
+		if [ -f skills/$$skill/SKILL.md ]; then cp skills/$$skill/SKILL.md $(DIST_DIR)/$$skill/; fi; \
+		cp scripts/copy.sh $(DIST_DIR)/$$skill/scripts/; \
+		chmod +x $(DIST_DIR)/$$skill/scripts/copy.sh; \
+	done
 
 # --- Testing & Verification ---
 
@@ -68,12 +73,20 @@ import-skill:
 	@echo "Successfully imported to .vendor/agent-bridge-clipboard/"
 
 # Target for isolated local sandbox testing
-# Usage: SANDBOX_DIR=../my-sandbox make deploy-sandbox
+# Usage: SANDBOX_DIR=../my-sandbox TARGET_SKILL=gemini-clipboard-bridge make deploy-sandbox
 SANDBOX_DIR ?= ../agent-bridge-clipboard-sandbox
+TARGET_SKILL ?= agent-bridge-clipboard
 deploy-sandbox:
-	@echo "Deploying to local sandbox: $(SANDBOX_DIR)..."
-	mkdir -p $(SANDBOX_DIR)/.agents/skills/agent-bridge-clipboard/scripts
-	cp $(SKILL_SRC)/SKILL.md $(SANDBOX_DIR)/.agents/skills/agent-bridge-clipboard/
-	cp $(SKILL_SRC)/scripts/copy.sh $(SANDBOX_DIR)/.agents/skills/agent-bridge-clipboard/scripts/
-	chmod +x $(SANDBOX_DIR)/.agents/skills/agent-bridge-clipboard/scripts/copy.sh
+	@echo "Deploying $(TARGET_SKILL) to local sandbox: $(SANDBOX_DIR)..."
+	mkdir -p $(SANDBOX_DIR)/scripts
+	cp scripts/copy.sh $(SANDBOX_DIR)/scripts/
+	chmod +x $(SANDBOX_DIR)/scripts/copy.sh
+	@if [ "$(TARGET_SKILL)" = "agent-bridge-clipboard" ]; then \
+		cp SKILL.md $(SANDBOX_DIR)/; \
+		mkdir -p $(SANDBOX_DIR)/commands/abc; \
+		cp commands/abc/*.toml $(SANDBOX_DIR)/commands/abc/; \
+		cp gemini-extension.json $(SANDBOX_DIR)/; \
+	else \
+		cp skills/$(TARGET_SKILL)/SKILL.md $(SANDBOX_DIR)/; \
+	fi
 	@echo "Deployment complete. You can now run 'gemini --sandbox' in $(SANDBOX_DIR)"
