@@ -23,33 +23,70 @@ if [ -f "/.dockerenv" ] || grep -q "docker" /proc/self/cgroup 2>/dev/null; then
     log_debug "Sandbox/Container detected"
 fi
 
-encoded=$(echo -n "$*" | base64 | tr -d '\n')
+# 0. Handle Input
+if [ $# -eq 0 ]; then
+    if [ -t 0 ]; then
+        # Stdin is a TTY, no arguments provided - nothing to copy
+        log_debug "No input provided and stdin is a TTY"
+        exit 0
+    fi
+    input=$(cat)
+else
+    input="$*"
+fi
+
+encoded=$(printf "%s" "$input" | base64 | tr -d '\n')
 osc52_sequence=$(printf "\e]52;c;%s\a" "$encoded")
 
-# 1. Primary: Platform-Native Tools (WSL/macOS)
+# Wrap for Tmux passthrough if needed
+if [ -n "$TMUX" ]; then
+    log_debug "TMUX detected, wrapping OSC 52 sequence"
+    osc52_sequence=$(printf "\ePtmux;\e%s\e\\" "$osc52_sequence")
+elif [ -n "$STY" ]; then
+    log_debug "GNU Screen detected, wrapping OSC 52 sequence"
+    osc52_sequence=$(printf "\eP%s\e\\" "$osc52_sequence")
+fi
+
+# 1. Primary: Platform-Native Tools (WSL/macOS/Linux)
 # Only attempt native tools if NOT in a sandbox (usually lack host access)
 if [ "$IS_SANDBOX" = false ]; then
+    # WSL / Windows
     if grep -qi microsoft /proc/version 2>/dev/null; then
         log_debug "Detected WSL/Microsoft environment"
         if command -v clip.exe >/dev/null; then
-            log_debug "Found clip.exe in PATH, using it"
-            echo -n "$*" | clip.exe
-            exit 0
-        elif [ -f "/mnt/c/Windows/System32/clip.exe" ]; then
-            log_debug "Found clip.exe at absolute path, using it"
-            echo -n "$*" | /mnt/c/Windows/System32/clip.exe
+            log_debug "Found clip.exe, using it"
+            printf "%s" "$input" | clip.exe
             exit 0
         elif command -v powershell.exe >/dev/null; then
-            log_debug "Found powershell.exe, using it"
-            echo -n "$*" | powershell.exe -NoProfile -NonInteractive -Command "Set-Clipboard -Value \$Input"
+            log_debug "Found powershell.exe, using it with UTF-8 encoding"
+            # Set UTF8 encoding to prevent corruption of non-ASCII characters
+            printf "%s" "$input" | powershell.exe -NoProfile -NonInteractive -Command "[Console]::InputEncoding = [System.Text.Encoding]::UTF8; \$input | Set-Clipboard"
             exit 0
         fi
     fi
 
+    # macOS
     if [[ "$OSTYPE" == "darwin"* ]] && command -v pbcopy >/dev/null; then
         log_debug "Detected macOS, using pbcopy"
-        echo -n "$*" | pbcopy
+        printf "%s" "$input" | pbcopy
         exit 0
+    fi
+
+    # Linux (Desktop)
+    if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
+        if command -v wl-copy >/dev/null; then
+            log_debug "Detected Wayland, using wl-copy"
+            printf "%s" "$input" | wl-copy
+            exit 0
+        elif command -v xclip >/dev/null; then
+            log_debug "Detected X11, using xclip"
+            printf "%s" "$input" | xclip -selection clipboard
+            exit 0
+        elif command -v xsel >/dev/null; then
+            log_debug "Detected X11, using xsel"
+            printf "%s" "$input" | xsel --clipboard --input
+            exit 0
+        fi
     fi
 fi
 

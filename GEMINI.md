@@ -29,6 +29,10 @@ The verification process for the `tests/COMPATIBILITY.md` matrix is handled **st
 
 ### Technical Learnings
 - **SSH Bypass**: Writing directly to the `$SSH_TTY` device (e.g., `/dev/pts/0`) is the most reliable way to bypass Gemini CLI subshell capture in remote environments.
+- **Multiplexer Passthrough**: TMUX and GNU Screen require DCS (Device Control String) wrapping (e.g., `\ePtmux;\e...\e\\`) to allow OSC 52 sequences to reach the parent terminal emulator.
+- **WSL/PowerShell Encoding**: When using `powershell.exe` for clipboard access in WSL, `[Console]::InputEncoding = [System.Text.Encoding]::UTF8` must be set to prevent character corruption.
+- **Linux Desktop Support**: Prioritize `wl-copy` (Wayland) -> `xclip` -> `xsel` (X11) for local desktop environments.
+- **Input Handling**: Use `printf "%s"` and stdin piping for large payloads to avoid `ARG_MAX` limits and accidental escape character expansion.
 - **False Positives**: The script performs a robust clipboard clear before every test case to prevent stale data from compromising results.
 - **WSL Success**: `clip.exe` and `powershell.exe` are the verified fallback methods for local WSL2 sessions where OSC 52 might be captured.
 
