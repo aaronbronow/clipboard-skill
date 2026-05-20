@@ -3,6 +3,24 @@
 
 # --- Configuration ---
 MATRIX_FILE="tests/COMPATIBILITY.md"
+HEADLESS_FILE=".headless_token"
+
+show_help() {
+    echo "Usage: $0 [options]"
+    echo ""
+    echo "Options:"
+    echo "  --clear               Reset the compatibility matrix."
+    echo "  --headless            Run in headless mode (writes a unique token to clipboard)."
+    echo "  --method=<name>       Target a specific method for headless mode."
+    echo "  --validate=<token>    Validate a previously written headless token."
+    echo "  --help                Show this help message."
+    echo ""
+    echo "Methods:"
+    echo "  osc52-stdout, osc52-tty, osc52-ssh, osc52-tmux"
+    echo "  wsl-clip, wsl-powershell"
+    echo "  bypass-file, bypass-pipe"
+    echo "  bridge"
+}
 
 clear_matrix() {
     echo "Clearing $MATRIX_FILE..."
@@ -11,6 +29,7 @@ clear_matrix() {
 
 ## Notes
 - **Windows Terminal:** Requires OSC 52 enabled in settings.
+- **VS Code Terminal:** Requires \`terminal.integrated.allowOsc52\` (or \`terminal.integrated.allowClipboardOperations\`) enabled in settings.
 - **TMUX:** May require \`set -s set-clipboard on\` in \`.tmux.conf\`.
 
 Use \`tests/verify.sh\` to populate this matrix.
@@ -21,8 +40,85 @@ EOF
     echo "Matrix cleared."
 }
 
-if [[ "$1" == "--clear" ]]; then
-    clear_matrix
+# --- Argument Parsing ---
+for i in "$@"; do
+    case $i in
+        --clear)
+            clear_matrix
+            exit 0
+            ;;
+        --headless)
+            RUN_HEADLESS=true
+            shift
+            ;;
+        --method=*)
+            TARGET_METHOD="${i#*=}"
+            shift
+            ;;
+        --validate=*)
+            VALIDATE_TOKEN="${i#*=}"
+            DO_VALIDATE=true
+            shift
+            ;;
+        --help)
+            show_help
+            exit 0
+            ;;
+    esac
+done
+
+get_method_cmd() {
+    local method=$1
+    local token=$2
+    local b64_token=$(echo -n "$token" | base64)
+
+    case $method in
+        osc52-stdout)     echo "printf '\e]52;c;${b64_token}\a'" ;;
+        osc52-tty)        echo "printf '\e]52;c;${b64_token}\a' > /dev/tty" ;;
+        osc52-ssh)        echo "printf '\e]52;c;${b64_token}\a' > $SSH_TTY" ;;
+        osc52-tmux)       echo "printf '\ePtmux;\e\e]52;c;${b64_token}\a\e\\\' > ${SSH_TTY:-/dev/tty}" ;;
+        wsl-clip)         echo "echo -n '${token}' | clip.exe" ;;
+        wsl-powershell)   echo "echo -n '${token}' | powershell.exe -Command Set-Clipboard" ;;
+        bypass-file)      echo "printf '\e]52;c;${b64_token}\a' > .clipboard_bypass" ;;
+        bypass-pipe)      echo "printf '\e]52;c;${b64_token}\a' > .clipboard_pipe" ;;
+        bridge)           echo "scripts/copy.sh '${token}'" ;;
+        *)                return 1 ;;
+    esac
+}
+
+if [ "$DO_VALIDATE" = true ]; then
+    if [ ! -f "$HEADLESS_FILE" ]; then
+        echo "Error: No headless token found in $HEADLESS_FILE. Run --headless first."
+        exit 1
+    fi
+    EXPECTED=$(cat "$HEADLESS_FILE")
+    if [ "$VALIDATE_TOKEN" == "$EXPECTED" ]; then
+        echo "SUCCESS: Token matches!"
+        rm "$HEADLESS_FILE"
+        exit 0
+    else
+        echo "FAILURE: Expected '$EXPECTED', got '$VALIDATE_TOKEN'"
+        exit 1
+    fi
+fi
+
+if [ "$RUN_HEADLESS" = true ]; then
+    TOKEN="headless-$(date +%s)"
+    METHOD="${TARGET_METHOD:-bridge}"
+    CMD=$(get_method_cmd "$METHOD" "$TOKEN")
+    
+    if [ $? -ne 0 ]; then
+        echo "Error: Unknown method '$METHOD'"
+        exit 1
+    fi
+
+    echo "Headless mode [Method: $METHOD]: Writing '$TOKEN' to clipboard..."
+    echo "$TOKEN" > "$HEADLESS_FILE"
+    
+    # Execute the selected command
+    eval "$CMD" 2>/dev/null || eval "$CMD"
+    
+    echo "Token written using $METHOD. Now run: $0 --validate=<paste_here>"
     exit 0
 fi
 
@@ -53,6 +149,10 @@ echo "--- Clipboard Compatibility Tester ---"
 echo "Machine: $(hostname)"
 echo "OS: $(uname -srm)"
 echo "Client: ${CLIENT_OS:-Unknown} / ${CLIENT_TERM:-Unknown}"
+if [ -z "$CLIENT_OS" ] || [ -z "$CLIENT_TERM" ]; then
+    echo "TIP: Provide metadata for the matrix by setting CLIENT_OS and CLIENT_TERM:"
+    echo "     CLIENT_OS=\"Windows\" CLIENT_TERM=\"Windows Terminal\" $0"
+fi
 echo "TTY: $(tty)"
 echo "SSH_TTY: $SSH_TTY"
 echo "TERM: $TERM"
@@ -64,6 +164,10 @@ if grep -qi microsoft /proc/version 2>/dev/null; then IS_WSL=true; fi
 IS_MACOS=false
 if [[ "$OSTYPE" == "darwin"* ]]; then IS_MACOS=true; fi
 
+# --- State ---
+PASS_COUNT=0
+FAIL_COUNT=0
+
 test_copy() {
     local category=$1
     local label=$2
@@ -71,6 +175,11 @@ test_copy() {
     local expected=$4
     local full_label="[$category] $label"
     
+    # Ensure matrix file exists with headers before appending
+    if [ ! -f "$MATRIX_FILE" ]; then
+        clear_matrix
+    fi
+
     echo "Clearing clipboard..."
     clear_clipboard
 
@@ -83,9 +192,11 @@ test_copy() {
     if [ "$pasted" == "$expected" ]; then
         status="SUCCESS"
         echo "[$status] Clipboard matches: '$pasted'"
+        PASS_COUNT=$((PASS_COUNT + 1))
     else
         status="FAILURE"
         echo "[$status] Expected '$expected', but got '$pasted'"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
     fi
     
     # --- Logging Logic ---
@@ -99,10 +210,10 @@ test_copy() {
     
     # Mode detection
     local mode="Outside CLI"
-    if [ "$GEMINI_CLI" = "1" ]; then
-        mode="${GEMINI_MODE:-Default}"
+    if [ "$GEMINI_CLI" = "1" ] || [ "$AGENT_CLI" = "1" ]; then
+        mode="${AGENT_MODE:-${GEMINI_MODE:-Default}}"
         # Heuristic for sandbox if not explicitly provided
-        if [ -z "$GEMINI_MODE" ] && env | grep -qiE "SANDBOX|DOCKER|KUBERNETES"; then
+        if [ -z "$AGENT_MODE" ] && [ -z "$GEMINI_MODE" ] && env | grep -qiE "SANDBOX|DOCKER|KUBERNETES"; then
             mode="Sandbox"
         fi
     fi
@@ -135,7 +246,17 @@ if [ "$IS_WSL" = true ]; then
     
     POWERSHELL_EXE=$(command -v powershell.exe || echo "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
     if [ -f "$POWERSHELL_EXE" ] || command -v powershell.exe >/dev/null; then
-        test_copy "WSL" "powershell.exe" "echo -n 'test-powershell' | \"$POWERSHELL_EXE\" -Command Set-Clipboard" "test-powershell"
+        test_copy "WSL" "powershell.exe" "echo -n 'test-powershell' | \"$POWERSHELL_EXE\" -NoProfile -NonInteractive -Command \"Set-Clipboard -Value \\\$Input\"" "test-powershell"
+    fi
+fi
+
+# --- Windows (Native) Category ---
+if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+    if command -v clip.exe >/dev/null; then
+        test_copy "Windows" "clip.exe" "echo -n 'test-native-clip' | clip.exe" "test-native-clip"
+    fi
+    if command -v powershell.exe >/dev/null; then
+        test_copy "Windows" "powershell.exe" "echo -n 'test-native-powershell' | powershell.exe -Command Set-Clipboard" "test-native-powershell"
     fi
 fi
 
@@ -157,10 +278,16 @@ if [ -p ".clipboard_pipe" ]; then
     test_copy "Bypass" "Named Pipe (.clipboard_pipe)" "printf '\e]52;c;dGVzdC1waXBlLWJ5cGFzcw==\a' > .clipboard_pipe" "test-pipe-bypass"
 fi
 
-BRIDGE_SCRIPT=".agents/skills/agent-bridge-clipboard/scripts/copy.sh"
+BRIDGE_SCRIPT="scripts/copy.sh"
 if [ -f "$BRIDGE_SCRIPT" ]; then
     test_copy "Bridge" "copy.sh wrapper" "$BRIDGE_SCRIPT 'test-bridge-script'" "test-bridge-script"
 fi
 
 echo "-----------------------------------"
 echo "Verification complete."
+echo "Summary: $PASS_COUNT PASSED, $FAIL_COUNT FAILED"
+if [ $FAIL_COUNT -eq 0 ]; then
+    echo "RESULT: ALL TESTS PASSED ✅"
+else
+    echo "RESULT: SOME TESTS FAILED ❌"
+fi

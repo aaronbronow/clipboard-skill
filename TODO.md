@@ -25,6 +25,7 @@ To provide a seamless, persistent, and portable clipboard history that allows va
 **Goal:** Port the bridge logic to other AI ecosystems.
 - [ ] **Claude Port:** `claude-clipboard-bridge` (MCP Server implementation).
 - [ ] **Copilot Port:** `copilot-clipboard-bridge` (VS Code Extension hook).
+- [ ] **GitHub Copilot CLI:** Native shell integration.
 - [ ] **OpenAI Port:** Custom Action / GPT implementation.
 
 ## Phase 4: Persistence & Sync (Long Term)
@@ -42,6 +43,7 @@ Test each combination and update `tests/COMPATIBILITY.md`.
 
 #### Host Terminals
 - [ ] Windows Terminal
+- [ ] VS Code Terminal
 - [ ] iTerm2
 - [ ] Ghostty
 - [ ] Warp

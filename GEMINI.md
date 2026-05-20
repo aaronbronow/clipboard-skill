@@ -1,81 +1,54 @@
 # Project Instructions: Agent Bridge Clipboard
 
-## Project Architecture
-This repository serves as the **Upstream** "Uber" project for developing universal clipboard synchronization skills across multiple AI agent ecosystems (Gemini, Claude, etc.).
+## Project Architecture: The Hybrid Hub
+This repository serves as the **Upstream Hub** for universal clipboard synchronization across AI agent ecosystems (Gemini, Claude, Copilot, etc.). 
 
-- **Upstream (`agent-bridge-clipboard`)**: Responsible for core transport logic, cross-environment compatibility (SSH, WSL, Native), and the universal protocol.
-- **Downstream (`gemini-clipboard-bridge`)**: A specific implementation and bridge for Gemini CLI skills.
+### Architectural Tiers
+1.  **Primary Extension (`agent-bridge-clipboard`)**: The root-level source. It is a fully self-contained Gemini CLI extension, including metadata, commands, and the universal transport logic.
+2.  **Discrete Agent Skills**: Located in `skills/`. These are "logic-only" sub-packages (Flattened `SKILL.md` + universal `copy.sh`). They are designed to be linked or vendored into downstream projects without carrying redundant extension metadata.
+3.  **Universal Transport (`scripts/copy.sh`)**: The single source of truth for all transport logic (OSC 52, SSH Bypass, WSL Fallbacks). It is shared by all tiers via the build process.
+
+## Strategic Learnings & Intent
+The current architecture is the result of several key learnings:
+
+- **Source-to-Dist Alignment**: By promoting the main ABC extension to the root, we ensure that the development environment exactly mirrors the distribution structure. This eliminated the need for complex build-time patching (e.g., `sed` or `jq`).
+- **Hybrid Distribution Philosophy**:
+    - **End Users**: Get a clean, installable extension in `dist/agent-bridge-clipboard/`.
+    - **Downstream Developers**: Get modular, logic-only skills in `dist/*-clipboard-bridge/` that they can link into their own manifests.
+- **Universal Logic**: Centralizing `copy.sh` at the root ensures that bug fixes and transport improvements propagate to all agent bridges (Gemini, Claude, Copilot) simultaneously.
+- **Portable Relative Paths**: All commands and manifests use `./scripts/copy.sh`. This path is stable across source, standalone installation, and downstream linking.
 
 ## Clipboard Testing Protocol
 The verification process for the `tests/COMPATIBILITY.md` matrix is handled **strictly** by the `tests/verify.sh` script.
 
 ### Protocol Rules
-- **Interactive Requirement**: The script is interactive and **must** be run in a live, interactive subshell (e.g., `gemini --shell` or a direct terminal). It will exit immediately if executed as a non-interactive command (especially in Sandbox mode).
-- **Mandatory Metadata**: You MUST provide client metadata via environment variables for accurate matrix reporting.
-- **Workflow**:
-  ```bash
-  CLIENT_OS="Windows" CLIENT_TERM="Windows Terminal" GEMINI_MODE="Default" ./tests/verify.sh
-  ```
-- **Manual testing bypass**: Do NOT attempt to run manual tests or individual commands for the purpose of updating the matrix. Use the script to ensure consistent logging.
-- **Verification**: When prompted by the script, paste your clipboard content (Ctrl+V/Cmd+V) to verify the result.
-- **Reset**: Use `tests/verify.sh --clear` to reset the matrix to its baseline state.
+- **Interactive Requirement**: The script is interactive and **must** be run in a live, interactive subshell. It will exit immediately if executed as a non-interactive command.
+- **Mandatory Metadata**: You MUST provide client metadata via environment variables (e.g., `CLIENT_OS`, `CLIENT_TERM`) for accurate matrix reporting.
+- **Workflow**: `CLIENT_OS="macOS" CLIENT_TERM="iTerm2" make verify`
+- **Manual testing bypass**: Do NOT attempt to run manual tests to update the matrix. Use the script to ensure consistent logging and state management.
 
-### Learnings & Patterns
-- **SSH Bypass**: We have confirmed that writing directly to the `SSH_TTY` device (e.g., `/dev/pts/0`) is the most reliable way to bypass Gemini CLI subshell capture in remote environments.
-- **Reporting**: The compatibility matrix now distinguishes between the **User Environment** (host metadata) and **Agent Environment** (runtime context/TTY).
-- **False Positives**: The script now performs a robust clipboard clear before every test case. In WSL2 environments where OSC 52 is captured, automated clearing must use fallbacks like `clip.exe` to prevent stale data from compromising results.
+### Technical Learnings
+- **SSH Bypass**: Writing directly to the `$SSH_TTY` device (e.g., `/dev/pts/0`) is the most reliable way to bypass Gemini CLI subshell capture in remote environments.
+- **False Positives**: The script performs a robust clipboard clear before every test case to prevent stale data from compromising results.
+- **WSL Success**: `clip.exe` and `powershell.exe` are the verified fallback methods for local WSL2 sessions where OSC 52 might be captured.
 
-### Compatibility Matrix Rules
-- **Positioning**: The Markdown table **must** be the final element in `tests/COMPATIBILITY.md`.
-- **Columns**: User Environment, Agent Environment, Agent Mode, Connection, Method, Status.
+## Sandbox Clipboard Bypasses (Verified)
+Direct clipboard access from a Docker sandbox is restricted. We use shared workspace files as signaling channels:
 
-## Current Focus
-- **SSH Bypass Testing**: The next priority is testing the `SSH_TTY` bypass logic on remote environments (e.g., `ubuntu-dev`).
-- **OSC 52 Troubleshooting**: We've confirmed that standard OSC 52 escapes are captured by the Gemini CLI subshell in local WSL2/xterm-256color environments. Testing via a direct SSH TTY is the next step to verify if we can bypass this capture.
-- **WSL Success**: We have confirmed `clip.exe` and `powershell.exe` as successful fallback methods for local WSL2 sessions.
+1.  **SSH TTY Redirection**: Writing directly to the host's `$SSH_TTY` (Remote/Background).
+2.  **Named Pipe (FIFO)**: Preferred for low-latency local sandboxes (`.clipboard_pipe`).
+3.  **File-Based Signaling**: Robust fallback for local sandboxes (`.clipboard_bypass`).
 
-## Sandboxing on ARM/WSL2
-If you encounter an `Exec format error` when running `gemini --sandbox` on an ARM64 host (like Surface Pro 9/11 or Apple Silicon), it is because the official sandbox image is `amd64`.
+### Headless Verification
+For testing in non-interactive environments (e.g., `run_shell_command`):
+1.  `make headless METHOD=osc52-ssh` (Generates a unique token).
+2.  `make validate TOKEN=<paste_result>` (Validates the transport).
 
-### Solution: Build a local ARM image
-1. **Build the image**:
-   ```bash
-   docker build -t gemini-sandbox-arm64 -f .gemini/sandbox.Dockerfile .
-   ```
-2. **Configure Gemini to use it**:
-   Add this to your `.env` or run it in your shell:
-   ```bash
-   export GEMINI_SANDBOX_IMAGE="gemini-sandbox-arm64"
-   ```
-
-## Sandbox Clipboard Limitations & Bypasses
-Direct clipboard access from the Docker sandbox is restricted by environment isolation and the headless nature of the container.
-
-### Findings
-- **Tooling Failure**: Traditional tools like `xsel` and `wl-clipboard` fail because the sandbox lacks an X11 or Wayland display server.
-- **OSC 52 Capture**: Standard OSC 52 escape sequences sent to `stdout` are captured and neutralized by the Gemini CLI subshell buffer, preventing them from reaching the host terminal.
-- **TTY Absence**: Writing to `/dev/tty` fails within the sandbox as no TTY is allocated for the agent's shell.
-
-### Sandbox Bypass Protocols (Verified)
-The following protocols bridge the sandbox and host clipboard by using shared workspace files as signaling channels. These mechanisms are abstracted by `copy.sh` and verified via `tests/verify.sh`.
-
-#### 1. Named Pipe (FIFO)
-- **Status**: **SUCCESS** - Preferred for low-latency.
-- **Host Listener**: `while true; do cat .clipboard_pipe; done > $(tty)`
-- **Mechanism**: The system writes OSC 52 escape sequences to `.clipboard_pipe`.
-
-#### 2. File-Based signaling
-- **Status**: **SUCCESS** - Robust fallback.
-- **Host Listener**: `tail -F .clipboard_bypass > $(tty)`
-- **Mechanism**: The system writes OSC 52 escape sequences to `.clipboard_bypass`.
-
-#### Bridge Logic (`copy.sh`)
-The `copy.sh` bridge prioritizes execution as follows:
-1. **Native Tools**: Uses `clip.exe` (WSL) or `pbcopy` (macOS) if available in the local environment.
-2. **Direct TTY**: Writes to `/dev/tty` (effective for remote SSH sessions).
-3. **Bypass Channels**: Writes to both `.clipboard_bypass` and `.clipboard_pipe` (required for Docker Sandboxes).
-4. **Stdout**: Final fallback to the primary output stream.
+## Development Workflow
+To test changes in an isolated environment without a full extension reinstall:
+1.  **Deploy**: `TARGET_SKILL=gemini-clipboard-bridge make deploy-sandbox`.
+2.  **Test**: Run `gemini --sandbox` in the target directory.
 
 ## Environment Notes
-- **WSL2 (Ubuntu 24.04)**: Requires `clip.exe` or `powershell.exe` for reliable clipboard access due to subshell output capture.
-- **ARM64 Compatibility**: Use the local Dockerfile in `.gemini/` to build a native sandbox image. This image includes `xsel` and `wl-clipboard` to support built-in clipboard commands like `/copy`.
+- **WSL2 (Ubuntu 24.04)**: Requires `clip.exe` for reliable access.
+- **ARM64 Compatibility**: Use the local Dockerfile in `.gemini/` to build a native sandbox image if running on Apple Silicon or ARM Surface.
