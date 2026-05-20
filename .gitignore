@@ -2,6 +2,7 @@
 .clipboard_bypass
 .clipboard_pipe
 .clipboard_bypass.tmp
+clipboard_debug.log
 .gemini/
 PLAN.md
 *.swp
